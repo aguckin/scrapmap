@@ -1,0 +1,47 @@
+#!/bin/bash
+
+if [ $1 = "-h" ]; then
+	echo ""
+	echo "Scrapmap - A program designed to take a directory of image files and create"
+	echo "a timeline of locations for the images in that directory"
+	echo ""
+	echo "Usage: scrapmap [options] [/path/to/photos]"
+	echo ""
+	echo "Options:"
+	echo ""
+	echo "-h : prints out help menu"
+	echo ""
+	echo "Examples:"
+	echo ""
+	echo "scrapmap ./"
+	echo "this will process all of the image files in the current working directory"
+	echo ""
+	exit 0
+fi
+
+for foto in `"${@: -1}"/* | ls -t`; #grab the last argument in the list
+do
+
+#	LOT="$(file $foto)" #get file type
+#	LOT=$(sed "s/: /\n/;s/.*\n//"<<<"$LOT") #strip out uncessary data
+#	LOT=$(cut -f1 -d"G" <<<"$LOT")
+
+	if [ "$(file $foto | grep image)" != ""  ]; # if it is an image process it, otherwise skip it
+	then
+		name="$(exiftool $foto | sort | uniq -c | grep -m 1 -e 'File Name' )"
+		GPS="$(exiftool $foto | sort | uniq -c | grep -m 1 -e 'GPS Position')"
+		creat="$(exiftool $foto | sort | uniq -c | grep -m 1 -e 'Create Date')"
+
+		name=$(sed "s/ : /\n/;s/.*\n//"<<<"$name") # cut out everything that is not the data
+		GPS=$(sed "s/ : /\n/;s/.*\n//" <<<"$GPS")
+		creat=$(sed "s/ : /\n/;s/.*\n//" <<<"$creat")
+		echo '================='"$name"'====================='
+		echo 'Location : '"City Town, State, USA" # need to do API call to wolfram to get a town or city
+		  					  # if nothing is returned, print unknown
+		echo 'Coordinates : '"$GPS"
+		echo 'Date Taken : '"$creat"
+	else
+		continue
+	fi
+done
+
